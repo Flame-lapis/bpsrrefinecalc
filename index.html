@@ -3,271 +3,763 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>플람라피스의 정련 재료 계산기</title>
+    <title>플람라피스의 정련 재료 계산기 S2</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&family=Rajdhani:wght@600;700&display=swap');
+
         :root {
-            --primary-color: #ff3e81; --point-color: #4bffb0; --gold-color: #ffae00; 
-            --npc-color: #00d4ff; --bg-color: #1a1a1b; --card-bg: #2d2d2e; --error-color: #ff4d4d;
+            --primary: #ff3e81;
+            --point: #4bffb0;
+            --gold: #ffae00;
+            --npc: #00d4ff;
+            --meteorite: #c084fc;
+            --bg: #111113;
+            --card-bg: #1c1c1f;
+            --inner-bg: #141416;
+            --border: #2e2e33;
+            --error: #ff4d4d;
         }
-        body { font-family: 'Pretendard', sans-serif; background-color: var(--bg-color); color: #fff; display: flex; justify-content: center; padding: 20px 10px; margin: 0; }
-        .calc-card { background: var(--card-bg); padding: 25px; border-radius: 15px; width: 100%; max-width: 600px; border: 1px solid #444; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        h2 { text-align: center; color: var(--primary-color); margin-bottom: 20px; font-size: 1.4em; margin-top: 0; }
-        
-        .section-title { font-size: 0.9em; color: var(--gold-color); margin: 20px 0 10px 0; font-weight: bold; border-bottom: 1px solid #444; padding-bottom: 5px; }
 
-        /* 상단 일괄 제어판 */
-        .batch-control { background: #3d3d3f; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #555; }
-        .batch-buttons { display: flex; gap: 8px; margin-bottom: 12px; }
-        .batch-btn { flex: 1; padding: 10px; border-radius: 6px; border: none; background: #555; color: #fff; font-size: 0.85em; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .batch-btn:active { transform: scale(0.98); }
-        .batch-select-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: center; }
-        .batch-select-row label { font-size: 0.75em; color: #bbb; display: block; margin-bottom: 4px; text-align: center; }
+        * { box-sizing: border-box; }
 
-        .equip-header { display: grid; grid-template-columns: 138px 1fr 20px 1fr; gap: 8px; margin-bottom: 5px; padding: 0 10px; font-size: 0.75em; color: #aaa; text-align: center; }
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: var(--bg);
+            background-image:
+                radial-gradient(ellipse at 20% 0%, rgba(255,62,129,0.08) 0%, transparent 55%),
+                radial-gradient(ellipse at 80% 100%, rgba(75,255,176,0.05) 0%, transparent 55%);
+            color: #e8e8ec;
+            display: flex;
+            justify-content: center;
+            padding: 20px 10px 50px;
+            margin: 0;
+            min-height: 100vh;
+        }
 
-        .equip-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
-        .equip-row-container { display: flex; flex-direction: column; }
-        .equip-item { display: grid; grid-template-columns: 30px 100px 1fr 20px 1fr; align-items: center; background: #363637; padding: 10px; border-radius: 8px; gap: 8px; border: 1px solid transparent; transition: 0.2s; }
-        .equip-item.inactive { opacity: 0.4; }
-        .equip-item.error { border-color: var(--error-color); background: #3d2626; border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
-        
-        .row-error-msg { background: var(--error-color); color: #fff; font-size: 0.7em; padding: 4px 10px; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; display: none; font-weight: bold; text-align: center; }
-        
-        input[type="checkbox"] { accent-color: var(--primary-color); width: 18px; height: 18px; cursor: pointer; }
-        .equip-name { font-size: 0.85em; font-weight: bold; }
-        
-        select { width: 100%; padding: 6px; background: #1a1a1b; border: 1px solid #555; color: #fff; border-radius: 4px; font-size: 13px; text-align: center; cursor: pointer; }
-        select:disabled { cursor: not-allowed; background: #222; color: #666; }
+        .calc-card { width: 100%; max-width: 660px; display: flex; flex-direction: column; gap: 14px; }
 
-        .btn-calc { width: 100%; padding: 16px; background: var(--primary-color); color: white; border: none; border-radius: 10px; font-size: 1.1em; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.2s; box-shadow: 0 4px 10px rgba(255, 62, 129, 0.3); }
-        .btn-calc:active { transform: scale(0.98); }
+        /* ── Header ── */
+        .header-block {
+            text-align: center;
+            padding: 26px 20px 22px;
+            background: var(--card-bg);
+            border-radius: 18px;
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+        .header-block::before {
+            content: '';
+            position: absolute;
+            top: -50px; left: 50%; transform: translateX(-50%);
+            width: 320px; height: 90px;
+            background: radial-gradient(ellipse, rgba(255,62,129,0.2) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .header-badge {
+            display: inline-block;
+            background: linear-gradient(90deg, #ff3e81, #ff7a45);
+            color: #fff;
+            font-size: 0.62em;
+            font-weight: 900;
+            letter-spacing: 3px;
+            padding: 3px 12px;
+            border-radius: 20px;
+            margin-bottom: 10px;
+            font-family: 'Rajdhani', sans-serif;
+        }
+        .header-title { font-size: 1.45em; font-weight: 900; color: #fff; letter-spacing: -0.5px; margin: 0; }
+        .header-title span { color: var(--primary); }
 
-        .result-area { margin-top: 25px; padding: 20px; background: #1a1a1b; border-radius: 10px; border: 1px dashed #555; display: none; }
-        .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .result-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 0.95em; border-bottom: 1px solid #333; padding-bottom: 8px; }
-        .item-info { display: flex; align-items: center; gap: 8px; }
-        .item-icon { width: 28px; height: 28px; object-fit: contain; border-radius: 4px; background: #2d2d2e; padding: 2px; }
-        
-        .highlight { color: var(--point-color); font-weight: bold; }
-        .val-text { color: var(--npc-color); font-weight: bold; }
-        .stone-row { grid-column: span 2; background: #2d2d2e; padding: 10px; border-radius: 8px; margin-top: 5px; border: 1px solid #444; }
+        /* ── Panel ── */
+        .panel { background: var(--card-bg); border-radius: 16px; border: 1px solid var(--border); overflow: hidden; }
+        .panel-header {
+            padding: 11px 18px;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.78em;
+            font-weight: 700;
+            color: var(--gold);
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .panel-body { padding: 15px 18px; }
+
+        /* ── Batch ── */
+        .batch-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 13px; }
+        .batch-btn {
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: #252528;
+            color: #ccc;
+            font-size: 0.78em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .batch-btn:hover { background: #303036; color: #fff; border-color: #555; }
+        .batch-select-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .form-label { font-size: 0.7em; color: #777; margin-bottom: 4px; display: block; }
+
+        /* ── Equip List ── */
+        .equip-col-header {
+            display: grid;
+            grid-template-columns: 30px 90px 1fr 18px 1fr;
+            gap: 8px;
+            padding: 0 16px 7px;
+            font-size: 0.68em;
+            color: #555;
+            text-align: center;
+        }
+        .equip-list { display: flex; flex-direction: column; gap: 5px; padding: 0 12px 14px; }
+        .equip-row-wrap { display: flex; flex-direction: column; }
+
+        .equip-item {
+            display: grid;
+            grid-template-columns: 30px 90px 1fr 18px 1fr;
+            align-items: center;
+            background: #252528;
+            padding: 9px 11px;
+            border-radius: 9px;
+            gap: 7px;
+            border: 1px solid transparent;
+            transition: all 0.15s;
+        }
+        .equip-item.inactive { opacity: 0.32; }
+        .equip-item.error { border-color: var(--error); background: #2d1f1f; border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+        .row-error-msg {
+            background: var(--error);
+            color: #fff;
+            font-size: 0.68em;
+            padding: 4px 12px;
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+            display: none;
+            font-weight: 700;
+            text-align: center;
+        }
+        input[type="checkbox"] { accent-color: var(--primary); width: 17px; height: 17px; cursor: pointer; }
+        .equip-name { font-size: 0.81em; font-weight: 700; }
+        select {
+            width: 100%;
+            padding: 6px 4px;
+            background: var(--inner-bg);
+            border: 1px solid var(--border);
+            color: #e8e8ec;
+            border-radius: 6px;
+            font-size: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.15s;
+        }
+        select:focus { outline: none; border-color: var(--primary); }
+        select:disabled { cursor: not-allowed; background: #1a1a1c; color: #444; }
+        .arrow-icon { color: #444; font-size: 0.72em; text-align: center; }
+
+        /* ── Calc Button ── */
+        .btn-calc {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(90deg, #ff3e81, #ff6b45);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1em;
+            font-weight: 900;
+            cursor: pointer;
+            letter-spacing: 0.5px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 20px rgba(255,62,129,0.35);
+        }
+        .btn-calc:hover { box-shadow: 0 6px 25px rgba(255,62,129,0.5); transform: translateY(-1px); }
+        .btn-calc:active { transform: scale(0.99); }
+
+        /* ── Result ── */
+        .result-area { background: var(--card-bg); border-radius: 16px; border: 1px solid var(--border); overflow: hidden; display: none; }
+        .result-area .panel-header { color: var(--point); border-color: rgba(75,255,176,0.2); background: rgba(75,255,176,0.04); }
+        .result-body { padding: 15px 18px; }
+        .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+        .result-tile {
+            background: var(--inner-bg);
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            padding: 11px 13px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        .result-tile.span2 { grid-column: span 2; }
+        .result-tile.accent-stone { border-color: rgba(255,174,0,0.28); background: rgba(255,174,0,0.04); }
+        .result-tile.accent-en3 { border-color: rgba(192,132,252,0.35); background: rgba(192,132,252,0.06); }
+        .tile-label { display: flex; align-items: center; gap: 7px; font-size: 0.77em; color: #aaa; }
+        .item-icon { width: 26px; height: 26px; object-fit: contain; border-radius: 4px; background: #2a2a2e; padding: 2px; }
+        .tile-val { font-family: 'Rajdhani', sans-serif; font-size: 1.2em; font-weight: 700; color: var(--npc); }
+        .tile-val.gold { color: var(--gold); }
+        .tile-val.purple { color: var(--meteorite); }
+        .stone-section-label { grid-column: span 2; font-size: 0.68em; color: #555; font-weight: 700; letter-spacing: 1px; padding: 5px 0 1px; }
+        .s2-tag { font-size: 0.68em; color: var(--meteorite); margin-left: 6px; font-weight: 700; }
+
+        /* ── Fragment Panel ── */
+        .fragment-panel .panel-header { background: linear-gradient(90deg, rgba(192,132,252,0.12), transparent); color: var(--meteorite); }
+
+        .fragment-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; flex-shrink: 0; }
+        .dot-bri { background: #60a5fa; }
+        .dot-moss { background: #34d399; }
+        .dot-meteorite { background: var(--meteorite); }
+
+        /* 파편 입력 3열 그리드 */
+        .frag-inputs { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+        .frag-group { display: flex; flex-direction: column; gap: 5px; }
+        .frag-group label { font-size: 0.7em; color: #777; display: flex; align-items: center; }
+
+        .frag-counter {
+            display: flex;
+            align-items: center;
+            background: var(--inner-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            transition: border-color 0.15s;
+        }
+        .frag-counter:focus-within { border-color: var(--meteorite); }
+        .frag-btn {
+            width: 32px;
+            height: 36px;
+            background: #252528;
+            border: none;
+            color: #aaa;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.12s;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .frag-btn:hover { background: #333338; color: #fff; }
+        .frag-btn:active { background: #3a3a40; }
+        .frag-val {
+            flex: 1;
+            text-align: center;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1.1em;
+            font-weight: 700;
+            color: #e8e8ec;
+            background: transparent;
+            border: none;
+            outline: none;
+            width: 100%;
+            min-width: 0;
+        }
+        /* 입력 제한 힌트 */
+        .frag-hint { font-size: 0.62em; color: #555; margin-top: 3px; }
+
+        /* 강화율 표시 박스 */
+        .rate-display {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .rate-tile {
+            background: var(--inner-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .rate-tile.active-rate { border-color: rgba(75,255,176,0.4); background: rgba(75,255,176,0.05); }
+        .rate-tile-label { font-size: 0.7em; color: #777; }
+        .rate-tile-val {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 2em;
+            font-weight: 700;
+            color: var(--npc);
+            line-height: 1;
+        }
+        .rate-tile.active-rate .rate-tile-val { color: var(--point); }
+        .rate-tile-sub { font-size: 0.68em; color: #555; }
+
+        /* 파편 적용 레벨 탭 */
+        .tab-row { display: flex; gap: 5px; margin-bottom: 14px; flex-wrap: wrap; }
+        .tab-btn {
+            flex: 1; min-width: 70px;
+            padding: 7px 6px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--inner-bg);
+            color: #555;
+            font-size: 0.72em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+        .tab-btn.active { background: rgba(192,132,252,0.15); border-color: var(--meteorite); color: #d8b4fe; }
+
+        .notice { font-size: 0.68em; color: #444; text-align: center; padding-top: 12px; }
+
+        /* ── Toast ── */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: rgba(30, 30, 34, 0.96);
+            border: 1px solid var(--point);
+            color: var(--point);
+            font-size: 0.82em;
+            font-weight: 700;
+            padding: 11px 20px;
+            border-radius: 30px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            z-index: 9999;
+            box-shadow: 0 4px 20px rgba(75,255,176,0.2);
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
     </style>
 </head>
 <body>
-
 <div class="calc-card">
-    <h2>⚔️ 정련 재료 계산기</h2>
+<div id="toast" class="toast">✦ 현재 최대 강화 확률입니다</div>
 
-    <div class="batch-control">
-        <div class="batch-buttons">
-            <button class="batch-btn" onclick="setAllCheckboxes(true)">모든 부위 선택</button>
-            <button class="batch-btn" onclick="setAllCheckboxes(false)">모든 부위 해제</button>
-        </div>
-        <div class="batch-select-row">
-            <div>
-                <label>일괄 현재 레벨</label>
-                <select id="batchCurr" onchange="applyBatchLevel('curr')"></select>
+    <div class="header-block">
+        <div class="header-badge">SEASON 2</div>
+        <h1 class="header-title">⚔️ 플람라피스의 <span>정련 계산기</span></h1>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">⚡ 일괄 설정</div>
+        <div class="panel-body">
+            <div class="batch-buttons">
+                <button class="batch-btn" onclick="setAllCheckboxes(true)">✔ 모든 부위 선택</button>
+                <button class="batch-btn" onclick="setAllCheckboxes(false)">✖ 모든 부위 해제</button>
             </div>
-            <div>
-                <label>일괄 목표 레벨</label>
-                <select id="batchTarget" onchange="applyBatchLevel('target')"></select>
+            <div class="batch-select-row">
+                <div>
+                    <label class="form-label">일괄 현재 레벨</label>
+                    <select id="batchCurr" onchange="applyBatchLevel('curr')"></select>
+                </div>
+                <div>
+                    <label class="form-label">일괄 목표 레벨</label>
+                    <select id="batchTarget" onchange="applyBatchLevel('target')"></select>
+                </div>
             </div>
         </div>
     </div>
-    
-    <div class="section-title">🛡️ 부위별 정련 레벨 설정</div>
-    
-    <div class="equip-header">
-        <div>부위 선택</div>
-        <div>현재 레벨</div>
-        <div></div>
-        <div>목표 레벨</div>
+
+    <div class="panel">
+        <div class="panel-header">🛡️ 부위별 정련 레벨 설정</div>
+        <div class="equip-col-header">
+            <div></div><div>부위</div><div>현재</div><div></div><div>목표</div>
+        </div>
+        <div class="equip-list" id="equipList"></div>
     </div>
 
-    <div class="equip-list" id="equipList"></div>
-    
     <button class="btn-calc" onclick="calculateAll()">선택한 부위의 정련 재료 합산하기</button>
 
     <div id="resultArea" class="result-area">
-        <div class="section-title" style="margin-top:0; border-color: var(--point-color);">📊 필요 재료 합산 결과</div>
-        <div class="result-grid" id="resultContent"></div>
+        <div class="panel-header">📊 필요 재료 합산 결과</div>
+        <div class="result-body">
+            <div class="result-grid" id="resultContent"></div>
+        </div>
     </div>
-</div>
 
+    <div class="panel fragment-panel">
+        <div class="panel-header">💎 기계 파편 강화 확률 계산기</div>
+        <div class="panel-body">
+
+            <!-- 레벨 탭 -->
+            <label class="form-label">강화 단계 선택 (현재 레벨 → 다음 레벨)</label>
+            <div class="tab-row" id="lvTabs"></div>
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+                <label class="form-label" style="margin:0; white-space:nowrap;">세부 레벨:</label>
+                <select id="fragLvSelect" onchange="onFragLvChange()" style="max-width:160px;"></select>
+            </div>
+
+            <!-- 파편 개수 입력 -->
+            <label class="form-label" style="margin-bottom:10px;">사용할 파편 개수 입력</label>
+            <div class="frag-inputs">
+                <div class="frag-group">
+                    <label class="form-label"><span class="fragment-dot dot-bri"></span>브리 파편</label>
+                    <div class="frag-counter">
+                        <button class="frag-btn" onclick="changeFragCount('bri',-1)">−</button>
+                        <input class="frag-val" id="frag-bri" type="number" value="0" min="0" max="5" readonly>
+                        <button class="frag-btn" onclick="changeFragCount('bri',+1)">+</button>
+                    </div>
+                    <div class="frag-hint">최대 5개 · +5%/개</div>
+                </div>
+                <div class="frag-group">
+                    <label class="form-label"><span class="fragment-dot dot-meteorite"></span>운석 파편</label>
+                    <div class="frag-counter">
+                        <button class="frag-btn" onclick="changeFragCount('meteorite',-1)">−</button>
+                        <input class="frag-val" id="frag-meteorite" type="number" value="0" min="0" max="3" readonly>
+                        <button class="frag-btn" onclick="changeFragCount('meteorite',+1)">+</button>
+                    </div>
+                    <div class="frag-hint">최대 3개 · +5%/개</div>
+                </div>
+                <div class="frag-group">
+                    <label class="form-label"><span class="fragment-dot dot-moss"></span>모스 파편</label>
+                    <div class="frag-counter">
+                        <button class="frag-btn" onclick="changeFragCount('moss',-1)">−</button>
+                        <input class="frag-val" id="frag-moss" type="number" value="0" min="0" readonly>
+                        <button class="frag-btn" onclick="changeFragCount('moss',+1)">+</button>
+                    </div>
+                    <div class="frag-hint">제한없음 · +3%/개</div>
+                </div>
+            </div>
+
+            <!-- 강화율 표시 -->
+            <div class="rate-display">
+                <div class="rate-tile">
+                    <div class="rate-tile-label">기본 강화 성공률</div>
+                    <div class="rate-tile-val" id="baseRateVal">—</div>
+                    <div class="rate-tile-sub" id="baseRateSubtext">레벨 단계를 선택하세요</div>
+                </div>
+                <div class="rate-tile active-rate">
+                    <div class="rate-tile-label">파편 적용 후 성공률</div>
+                    <div class="rate-tile-val" id="fragRateVal">—</div>
+                    <div class="rate-tile-sub" id="fragRateSubtext">파편 개수를 입력하세요</div>
+                </div>
+            </div>
+
+            <div class="notice">※ 브리·운석 파편은 각 최대 개수까지, 모스 파편은 개수 제한 없이 사용 가능합니다</div>
+        </div>
+    </div>
+
+</div>
 <script>
-    const icons = {
-        en1: "item_icons_star_crystal_01.webp",
-        en2: "item_icons_star_crystal_02.webp",
-        metal: "item_icons_god_metal_01.webp",
-        light: "item_icons_aluminium_01.webp",
-        crystal: "item_icons_god_metal_02.webp",
-        bri: "item_icons_equipment gems_01.webp",
-        moss: "item_icons_equipment gems_02.webp"
+    /* ══════════════════════════════════════════
+       정련표.xlsx 실데이터 (S2)
+       인덱스 i = 레벨 i 달성 시 필요 재료
+       (인덱스 0은 더미)
+    ══════════════════════════════════════════ */
+
+    // ── 무기 ──
+    const weapon = {
+        en1:   [0, 2,2,4,4,6,6,8,8,10,10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        en2:   [0, 0,0,0,0,0,0,0,0, 0, 0, 4, 4, 4, 6, 8, 8, 8,10,12,16,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        en3:   [0, 0,0,0,0,0,0,0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  4, 4, 6, 6, 8, 8,10,12,14,16],
+        stone: [0, 6,6,12,16,24,30,40,40,50,50,60,60,70,70,80,80,80,100,100,120, 120,120,120,120,120,120,120,120,120,120]
     };
 
-    const dataRef = {
-        weapon: {
-            bri: [0,0,0,0,0,0,1,1,1,2,3,4,5,5,5,5,5,5,5,5,5],
-            moss: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8,10,10],
-            en1: [0,2,2,4,4,6,6,8,8,10,10,0,0,0,0,0,0,0,0,0,0],
-            en2: [0,0,0,0,0,0,0,0,0,0,0,4,4,5,5,6,7,8,10,12,14],
-            stone: [0,6,6,12,16,24,30,40,40,50,50,60,60,70,70,80,80,80,100,100,120]
-        },
-        armor: {
-            bri: [0,0,0,0,0,0,1,1,1,2,3,4,5,5,5,5,5,5,5,5,5],
-            moss: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8,10,10],
-            en1: [0,1,1,2,2,3,3,4,4,5,5,0,0,0,0,0,0,0,0,0,0],
-            en2: [0,0,0,0,0,0,0,0,0,0,0,2,2,2,3,3,4,4,5,6,8],
-            stone: [0,3,3,6,8,12,15,20,20,25,25,30,30,35,35,40,40,40,50,50,60]
-        }
+    // ── 투구 / 상의 ──
+    const helmetTop = {
+        en1:   [0, 1,1,2,2,3,3,4,4,5,5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        en2:   [0, 0,0,0,0,0,0,0,0, 0, 0, 2, 2, 2, 3, 4, 4, 4,5,6,8,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        en3:   [0, 0,0,0,0,0,0,0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  2, 2, 3, 3, 4, 4,5,6,7,8],
+        stone: [0, 3,3, 6, 8,12,15,20,20,25,25,30,30,35,35,40,40,40, 50, 50, 60, 60,60,60,60,60,60,60,60,60,60]
+    };
+
+    // ── 장갑 / 신발 / 귀걸이 / 목걸이 ──
+    const lightArmor = {
+        en1:   [0, 1,1,2,2,3,3,4,4,5,5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        en2:   [0, 0,0,0,0,0,0,0,0, 0, 0, 2, 2, 2, 3, 4, 4, 4,5,6,8,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        en3:   [0, 0,0,0,0,0,0,0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  2, 2, 3, 3, 4, 4,5,6,7,8],
+        stone: [0, 3,3, 6, 8,12,15,20,20,25,25,30,30,35,35,40,40,40, 50, 50, 60, 60,60,60,60,60,60,60,60,60,60]
+    };
+
+    // ── 반지 / 팔찌(왼) / 팔찌(오) / 탈리스만 ──
+    const accessory = {
+        en1:   [0, 1,1,2,2,3,3,4,4,5,5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        en2:   [0, 0,0,0,0,0,0,0,0, 0, 0, 2, 2, 2, 3, 4, 4, 4,5,6,8,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        en3:   [0, 0,0,0,0,0,0,0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  2, 2, 3, 3, 4, 4,5,6,7,8],
+        stone: [0, 3,3, 6, 8,12,15,20,20,25,25,30,30,35,35,40,40,40, 50, 50, 60, 60,60,60,60,60,60,60,60,60,60]
+    };
+
+    /* 강화 확률 테이블 — 정련표.xlsx 기준
+       baseSuccessRate[i] = 레벨 i 달성(i-1 → i) 강화의 성공률(%)
+       인덱스 0은 더미 */
+    const baseSuccessRate = [
+        100,                            // 0 dummy
+        100,100,100,100,100,            // lv1~5  (lv0→1 ~ lv4→5)
+         95, 95, 95, 90, 85,            // lv6~10
+         80, 75, 70, 65, 60,            // lv11~15
+         55, 50, 50, 45, 45,            // lv16~20
+         45, 45, 45, 45, 45,            // lv21~25 (S2 — 표에 45% 기재)
+         45, 45, 45, 45, 45             // lv26~30 (S2 — 표에 45% 기재)
+    ];
+
+    const MAX_LV = 30;
+
+    const icons = {
+        en1:     'item_icons_star_crystal_01.webp',
+        en2:     'item_icons_star_crystal_02.webp',
+        en3:     'item_icons_star_crystal_03.webp',
+        metal:   'item_icons_god_metal_01.webp',
+        light:   'item_icons_aluminium_01.webp',
+        crystal: 'item_icons_god_metal_02.webp',
+        bri:     'item_icons_equipment gems_01.webp',
+        moss:    'item_icons_equipment gems_02.webp',
+        meteorite: 'item_icons_equipment gems_03.webp'
     };
 
     const equips = [
-        { id: 'w1', name: '무기', type: 'weapon', stoneKey: 'metal' },
-        { id: 'a1', name: '투구', type: 'armor', stoneKey: 'metal' },
-        { id: 'a2', name: '상의', type: 'armor', stoneKey: 'metal' },
-        { id: 'g1', name: '장갑', type: 'armor', stoneKey: 'light' },
-        { id: 's1', name: '신발', type: 'armor', stoneKey: 'light' },
-        { id: 'e1', name: '귀걸이', type: 'armor', stoneKey: 'light' },
-        { id: 'm1', name: '목걸이', type: 'armor', stoneKey: 'light' },
-        { id: 'r1', name: '반지', type: 'armor', stoneKey: 'crystal' },
-        { id: 'p1', name: '팔찌(왼)', type: 'armor', stoneKey: 'crystal' },
-        { id: 'p2', name: '팔찌(오)', type: 'armor', stoneKey: 'crystal' },
-        { id: 't1', name: '탈리스만', type: 'armor', stoneKey: 'crystal' }
+        { id:'w1',  name:'무기',      data: weapon,      stoneKey:'metal'   },
+        { id:'a1',  name:'투구',      data: helmetTop,   stoneKey:'metal'   },
+        { id:'a2',  name:'상의',      data: helmetTop,   stoneKey:'metal'   },
+        { id:'g1',  name:'장갑',      data: lightArmor,  stoneKey:'light'   },
+        { id:'s1',  name:'신발',      data: lightArmor,  stoneKey:'light'   },
+        { id:'e1',  name:'귀걸이',    data: lightArmor,  stoneKey:'light'   },
+        { id:'m1',  name:'목걸이',    data: lightArmor,  stoneKey:'light'   },
+        { id:'r1',  name:'반지',      data: accessory,   stoneKey:'crystal' },
+        { id:'p1',  name:'팔찌(왼)',  data: accessory,   stoneKey:'crystal' },
+        { id:'p2',  name:'팔찌(오)',  data: accessory,   stoneKey:'crystal' },
+        { id:'t1',  name:'탈리스만',  data: accessory,   stoneKey:'crystal' }
     ];
 
+    let selectedFragLv = 9;
+
+    const FRAG_MAX  = { bri: 5, meteorite: 3, moss: Infinity };
+    const FRAG_RATE = { bri: 5, meteorite: 5, moss: 3 };
+
+    /* ── Fragment Counter ── */
+    let toastTimer = null;
+    function showToast() {
+        const el = document.getElementById('toast');
+        el.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+    }
+
+    function getCurrentFinalRate() {
+        const lv   = selectedFragLv;
+        const base = lv < MAX_LV ? (baseSuccessRate[lv + 1] ?? 45) : 100;
+        const bri    = parseInt(document.getElementById('frag-bri').value)      || 0;
+        const meteor = parseInt(document.getElementById('frag-meteorite').value) || 0;
+        const moss   = parseInt(document.getElementById('frag-moss').value)      || 0;
+        return Math.min(100, base + bri*FRAG_RATE.bri + meteor*FRAG_RATE.meteorite + moss*FRAG_RATE.moss);
+    }
+
+    function changeFragCount(type, delta) {
+        // + 시도 시 이미 100%면 토스트만 표시하고 증가 차단
+        if (delta > 0 && getCurrentFinalRate() >= 100) {
+            showToast();
+            return;
+        }
+
+        const el  = document.getElementById(`frag-${type}`);
+        const max = FRAG_MAX[type];
+        let val = (parseInt(el.value) || 0) + delta;
+        val = Math.max(0, max === Infinity ? val : Math.min(max, val));
+        el.value = val;
+        updateRateDisplay();
+
+        // 증가 후 100%가 됐을 때도 토스트 표시
+        if (delta > 0 && getCurrentFinalRate() >= 100) showToast();
+    }
+
+    /* ── Rate Display ── */
+    function updateRateDisplay() {
+        const lv   = selectedFragLv;
+        const base = lv < MAX_LV ? (baseSuccessRate[lv + 1] ?? 45) : 100;
+
+        const bri    = parseInt(document.getElementById('frag-bri').value)      || 0;
+        const meteor = parseInt(document.getElementById('frag-meteorite').value) || 0;
+        const moss   = parseInt(document.getElementById('frag-moss').value)      || 0;
+
+        const bonus = bri * FRAG_RATE.bri + meteor * FRAG_RATE.meteorite + moss * FRAG_RATE.moss;
+        const final = Math.min(100, base + bonus);
+
+        document.getElementById('baseRateVal').textContent     = base + '%';
+        document.getElementById('baseRateSubtext').textContent = `Lv${lv} → Lv${lv + 1}`;
+        document.getElementById('fragRateVal').textContent     = final + '%';
+
+        const parts = [];
+        if (bri    > 0) parts.push(`브리 ×${bri}`);
+        if (meteor > 0) parts.push(`운석 ×${meteor}`);
+        if (moss   > 0) parts.push(`모스 ×${moss}`);
+        document.getElementById('fragRateSubtext').textContent =
+            parts.length ? `+${bonus}% (${parts.join(', ')})` : '파편 없음';
+    }
+
+    /* ── INIT ── */
     function init() {
-        const container = document.getElementById('equipList');
-        const batchCurr = document.getElementById('batchCurr');
-        const batchTarget = document.getElementById('batchTarget');
-
         let options = '';
-        for(let i=0; i<=20; i++) options += `<option value="${i}">${i}</option>`;
-        
-        batchCurr.innerHTML = options;
-        batchTarget.innerHTML = options.replace('value="20"', 'value="20" selected');
+        for (let i = 0; i <= MAX_LV; i++) options += `<option value="${i}">${i}</option>`;
+        const optDef = options.replace(`value="${MAX_LV}"`, `value="${MAX_LV}" selected`);
 
+        document.getElementById('batchCurr').innerHTML = options;
+        document.getElementById('batchTarget').innerHTML = optDef;
+
+        const container = document.getElementById('equipList');
         equips.forEach(eq => {
             container.innerHTML += `
-                <div class="equip-row-container">
+                <div class="equip-row-wrap">
                     <div class="equip-item inactive" id="row-${eq.id}">
                         <input type="checkbox" id="chk-${eq.id}" onchange="toggleRow('${eq.id}')">
                         <span class="equip-name">${eq.name}</span>
                         <select id="curr-${eq.id}" disabled onchange="handleInputChange('${eq.id}')">${options}</select>
-                        <span style="color:#555">▶</span>
-                        <select id="target-${eq.id}" disabled onchange="handleInputChange('${eq.id}')">${options.replace('value="0"', 'value="0"').replace('value="20"', 'value="20" selected')}</select>
+                        <div class="arrow-icon">▶</div>
+                        <select id="target-${eq.id}" disabled onchange="handleInputChange('${eq.id}')">${optDef}</select>
                     </div>
-                    <div id="error-${eq.id}" class="row-error-msg">목표 레벨이 현재 레벨 보다 낮습니다</div>
+                    <div id="error-${eq.id}" class="row-error-msg">목표 레벨이 현재 레벨보다 낮습니다</div>
                 </div>`;
         });
+
+        buildLvTabs();
+        updateRateDisplay();
     }
 
-    /* 결과창 숨기기 공통 함수 */
-    function hideResult() {
-        document.getElementById('resultArea').style.display = 'none';
+    /* ── Lv Tabs ── */
+    const LV_RANGES = [
+        { label:'Lv 1~5',   start:1  },
+        { label:'Lv 6~10',  start:6  },
+        { label:'Lv 11~15', start:11 },
+        { label:'Lv 16~20', start:16 },
+        { label:'Lv 21~25', start:21 },
+        { label:'Lv 26~30', start:26 }
+    ];
+
+    function buildLvTabs() {
+        const container = document.getElementById('lvTabs');
+        container.innerHTML = '';
+        LV_RANGES.forEach(r => {
+            const btn = document.createElement('button');
+            const active = selectedFragLv >= r.start && selectedFragLv < r.start + 5;
+            btn.className = 'tab-btn' + (active ? ' active' : '');
+            btn.textContent = r.label;
+            btn.onclick = () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                populateSubLv(r.start);
+            };
+            container.appendChild(btn);
+        });
+        // 기본 탭 sub-lv 초기화
+        const defaultRange = LV_RANGES.find(r => selectedFragLv >= r.start && selectedFragLv < r.start + 5) || LV_RANGES[1];
+        populateSubLv(defaultRange.start, selectedFragLv);
     }
 
-    /* 입력값 변동 시 에러 체크 및 결과창 초기화 */
-    function handleInputChange(id) {
-        hideResult();
-        validateLv(id);
+    function resetFragCounts() {
+        ['bri','meteorite','moss'].forEach(t => document.getElementById(`frag-${t}`).value = 0);
     }
+
+    function populateSubLv(rangeStart, selectVal) {
+        const prevBase = selectedFragLv < MAX_LV ? (baseSuccessRate[selectedFragLv + 1] ?? 45) : 100;
+        const sel = document.getElementById('fragLvSelect');
+        sel.innerHTML = '';
+        const end = Math.min(rangeStart + 4, MAX_LV - 1);
+        for (let i = rangeStart; i <= end; i++) {
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.textContent = `Lv ${i} → Lv ${i + 1}`;
+            if (i === (selectVal ?? selectedFragLv)) opt.selected = true;
+            sel.appendChild(opt);
+        }
+        selectedFragLv = parseInt(sel.value);
+        const newBase = selectedFragLv < MAX_LV ? (baseSuccessRate[selectedFragLv + 1] ?? 45) : 100;
+        if (newBase !== prevBase) resetFragCounts();
+        updateRateDisplay();
+    }
+
+    function onFragLvChange() {
+        const prevBase = selectedFragLv < MAX_LV ? (baseSuccessRate[selectedFragLv + 1] ?? 45) : 100;
+        selectedFragLv = parseInt(document.getElementById('fragLvSelect').value);
+        const newBase = selectedFragLv < MAX_LV ? (baseSuccessRate[selectedFragLv + 1] ?? 45) : 100;
+        if (newBase !== prevBase) resetFragCounts();
+        updateRateDisplay();
+    }
+
+    /* ── EQUIP LOGIC ── */
+    function hideResult() { document.getElementById('resultArea').style.display = 'none'; }
+    function handleInputChange(id) { hideResult(); validateLv(id); }
 
     function setAllCheckboxes(state) {
         hideResult();
-        equips.forEach(eq => {
-            const chk = document.getElementById(`chk-${eq.id}`);
-            chk.checked = state;
-            toggleRow(eq.id, false); // 일괄 처리 시 결과창 숨김 반복 방지 위해 인자 추가
-        });
+        equips.forEach(eq => { document.getElementById(`chk-${eq.id}`).checked = state; toggleRow(eq.id, false); });
     }
-
     function applyBatchLevel(type) {
         hideResult();
-        const batchVal = document.getElementById(type === 'curr' ? 'batchCurr' : 'batchTarget').value;
+        const val = document.getElementById(type === 'curr' ? 'batchCurr' : 'batchTarget').value;
         equips.forEach(eq => {
-            const select = document.getElementById(`${type}-${eq.id}`);
-            select.value = batchVal;
-            if(!select.disabled) validateLv(eq.id);
+            const sel = document.getElementById(`${type}-${eq.id}`);
+            sel.value = val;
+            if (!sel.disabled) validateLv(eq.id);
         });
     }
-
-    function toggleRow(id, shouldHideResult = true) {
-        if(shouldHideResult) hideResult();
-        const isChecked = document.getElementById(`chk-${id}`).checked;
+    function toggleRow(id, shouldHide = true) {
+        if (shouldHide) hideResult();
+        const checked = document.getElementById(`chk-${id}`).checked;
         const row = document.getElementById(`row-${id}`);
-        row.className = isChecked ? 'equip-item' : 'equip-item inactive';
-        row.querySelectorAll('select').forEach(s => s.disabled = !isChecked);
-        if(!isChecked) {
-            document.getElementById(`error-${id}`).style.display = 'none';
-            row.classList.remove('error');
-        } else {
-            validateLv(id);
-        }
+        row.className = checked ? 'equip-item' : 'equip-item inactive';
+        row.querySelectorAll('select').forEach(s => s.disabled = !checked);
+        if (!checked) { document.getElementById(`error-${id}`).style.display = 'none'; row.classList.remove('error'); }
+        else validateLv(id);
     }
-
     function validateLv(id) {
-        const curr = parseInt(document.getElementById(`curr-${id}`).value);
+        const curr   = parseInt(document.getElementById(`curr-${id}`).value);
         const target = parseInt(document.getElementById(`target-${id}`).value);
-        const row = document.getElementById(`row-${id}`);
-        const errorBox = document.getElementById(`error-${id}`);
-        
-        if (target < curr) {
-            row.classList.add('error');
-            errorBox.style.display = 'block';
-            return false;
-        } else {
-            row.classList.remove('error');
-            errorBox.style.display = 'none';
-            return true;
-        }
+        const row    = document.getElementById(`row-${id}`);
+        const err    = document.getElementById(`error-${id}`);
+        if (target < curr) { row.classList.add('error'); err.style.display = 'block'; return false; }
+        row.classList.remove('error'); err.style.display = 'none'; return true;
     }
 
+    /* ── CALCULATE ── */
     function calculateAll() {
-        let total = { bri:0, moss:0, en1:0, en2:0, metal:0, light:0, crystal:0 };
-        let anySelected = false;
-        let globalHasError = false;
+        let total = { en1:0, en2:0, en3:0, metal:0, light:0, crystal:0 };
+        let anySelected = false, hasError = false;
 
         equips.forEach(eq => {
-            if(document.getElementById(`chk-${eq.id}`).checked) {
-                anySelected = true;
-                if(!validateLv(eq.id)) {
-                    globalHasError = true;
-                } else {
-                    const curr = parseInt(document.getElementById(`curr-${eq.id}`).value);
-                    const target = parseInt(document.getElementById(`target-${eq.id}`).value);
-                    if(target > curr) {
-                        const data = dataRef[eq.type];
-                        for(let i = curr + 1; i <= target; i++) {
-                            total.bri += data.bri[i]; total.moss += data.moss[i];
-                            total.en1 += data.en1[i]; total.en2 += data.en2[i];
-                            total[eq.stoneKey] += data.stone[i];
-                        }
-                    }
-                }
+            if (!document.getElementById(`chk-${eq.id}`).checked) return;
+            anySelected = true;
+            if (!validateLv(eq.id)) { hasError = true; return; }
+            const curr   = parseInt(document.getElementById(`curr-${eq.id}`).value);
+            const target = parseInt(document.getElementById(`target-${eq.id}`).value);
+            if (target <= curr) return;
+            for (let i = curr + 1; i <= target; i++) {
+                total.en1  += eq.data.en1[i]   || 0;
+                total.en2  += eq.data.en2[i]   || 0;
+                total.en3  += eq.data.en3[i]   || 0;
+                total[eq.stoneKey] += eq.data.stone[i] || 0;
             }
         });
 
-        if(!anySelected) return;
-        if(globalHasError) {
-            hideResult();
-            return;
-        }
+        if (!anySelected || hasError) { hideResult(); return; }
 
+        const hasEn3 = total.en3 > 0;
         document.getElementById('resultArea').style.display = 'block';
         document.getElementById('resultContent').innerHTML = `
-            <div class="result-row"><div class="item-info"><img src="${icons.en1}" class="item-icon">엔그램 1Lv</div><span class="val-text">${total.en1.toLocaleString()}</span></div>
-            <div class="result-row"><div class="item-info"><img src="${icons.en2}" class="item-icon">엔그램 2Lv</div><span class="val-text">${total.en2.toLocaleString()}</span></div>
-            <div class="result-row"><div class="item-info"><img src="${icons.bri}" class="item-icon">브리 기계</div><span class="val-text">${total.bri.toLocaleString()}</span></div>
-            <div class="result-row"><div class="item-info"><img src="${icons.moss}" class="item-icon">모스 기계</div><span class="val-text">${total.moss.toLocaleString()}</span></div>
-            <div class="stone-row">
-                <div class="result-row"><div class="item-info"><img src="${icons.metal}" class="item-icon"><span class="highlight">신비한 금속</span></div><span class="highlight">${total.metal.toLocaleString()}</span></div>
-                <div class="result-row"><div class="item-info"><img src="${icons.light}" class="item-icon"><span class="highlight">광휘석</span></div><span class="highlight">${total.light.toLocaleString()}</span></div>
-                <div class="result-row"><div class="item-info"><img src="${icons.crystal}" class="item-icon"><span class="highlight">정제석</span></div><span class="highlight">${total.crystal.toLocaleString()}</span></div>
+            <div class="result-tile">
+                <div class="tile-label"><img src="${icons.en1}" class="item-icon">엔그램 1Lv</div>
+                <div class="tile-val">${total.en1.toLocaleString()}</div>
+            </div>
+            <div class="result-tile">
+                <div class="tile-label"><img src="${icons.en2}" class="item-icon">엔그램 2Lv</div>
+                <div class="tile-val">${total.en2.toLocaleString()}</div>
+            </div>
+            ${hasEn3 ? `
+            <div class="result-tile span2 accent-en3">
+                <div class="tile-label">
+                    <img src="${icons.en3}" class="item-icon" style="border:1px solid rgba(192,132,252,0.4);">
+                    엔그램 3Lv <span class="s2-tag">S2 신규</span>
+                </div>
+                <div class="tile-val purple">${total.en3.toLocaleString()}</div>
+            </div>` : ''}
+            <div class="stone-section-label">▸ 필요 강화석</div>
+            <div class="result-tile accent-stone">
+                <div class="tile-label"><img src="${icons.metal}" class="item-icon">신비한 금속</div>
+                <div class="tile-val gold">${total.metal.toLocaleString()}</div>
+            </div>
+            <div class="result-tile accent-stone">
+                <div class="tile-label"><img src="${icons.light}" class="item-icon">광휘석</div>
+                <div class="tile-val gold">${total.light.toLocaleString()}</div>
+            </div>
+            <div class="result-tile accent-stone span2">
+                <div class="tile-label"><img src="${icons.crystal}" class="item-icon">정제석</div>
+                <div class="tile-val gold">${total.crystal.toLocaleString()}</div>
             </div>`;
     }
+
     init();
 </script>
 </body>
 </html>
-
